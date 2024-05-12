@@ -8,6 +8,13 @@ import {
     OwnableUpgradeable
 } from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
+/**
+ * @title MonadexPrelaunchPoints.
+ * @author Monadex Labs -- mgnfy-view.
+ * @notice The points system allows us to reward active and loyal users of our protocol.
+ * Points will be convertible to the MDX token (Monadex governance and utility token) after
+ * launch.
+ */
 contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     struct TransferRequest {
         address to;
