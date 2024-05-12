@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
-import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {
+    Ownable2StepUpgradeable,
+    OwnableUpgradeable
+} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
-contract MonadexPrelaunchPoints is Ownable2Step {
+contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
     struct TransferRequest {
         address to;
         uint256 amount;
@@ -32,7 +37,9 @@ contract MonadexPrelaunchPoints is Ownable2Step {
     error MonadexPrelauncPoints__ArraySizesDoNotMatch();
     error MonadexPrelauncPoints__ExcessPenalty();
 
-    constructor() Ownable(msg.sender) {}
+    function initialize(address _owner) public initializer {
+        __Ownable_init(_owner);
+    }
 
     /**
      * @notice Allows the Monadex team (owner) to allocate points to a single user.
@@ -177,4 +184,6 @@ contract MonadexPrelaunchPoints is Ownable2Step {
     function getCurrentIndex() external view returns (uint256) {
         return s_currentIndex;
     }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }

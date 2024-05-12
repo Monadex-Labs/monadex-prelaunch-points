@@ -11,11 +11,6 @@ describe("MonadexPrelaunchPoints", function () {
     async function deployPrelaunchPointsFixture() {
         const [owner, user0, user1, user2] = await ethers.getSigners();
 
-        const PrelauncPoints = await ethers.getContractFactory(
-            "MonadexPrelaunchPoints",
-        );
-        const prelauncPoints = await PrelauncPoints.deploy();
-
-        return { prelauncPoints, owner, user0, user1, user2 };
+        return { owner, user0, user1, user2 };
     }
 });
