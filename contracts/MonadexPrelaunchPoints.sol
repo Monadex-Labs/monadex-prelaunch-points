@@ -32,6 +32,7 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
      */
     TransferRequest[] private s_verificationQueue;
     uint256 private s_currentIndex;
+    uint256[20] private __; // reserving some space so that we can add variables during an update
 
     event PointsAllocated(address indexed user, uint256 indexed amount);
     event BatchPointsAllocated(address[] users, uint256[] amounts);
@@ -156,6 +157,15 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
         }
 
         emit BatchTransferRequestsAccepted(_indices);
+    }
+
+    /**
+     * @notice Gets the transfer request details at the specified index.
+     * @param _index The index at which the transfer request details lie.
+     * @return The TransferRequest struct.
+     */
+    function getTransferRequest(uint256 _index) external view returns (TransferRequest memory) {
+        return s_verificationQueue[_index];
     }
 
     /**
