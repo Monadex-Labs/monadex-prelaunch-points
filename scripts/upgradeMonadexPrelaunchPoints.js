@@ -11,8 +11,8 @@ async function upgradeMonadexPrelaunchPoints() {
     console.log("Upgrading `MonadexPrelaunchPoints`...");
 
     const monadexPrelaunchPoints = await upgrades.upgradeProxy(
-        MonadexPrelaunchPointsFactory,
         MONADEX_PRELAUNCH_POINTS_ADDRESS,
+        MonadexPrelaunchPointsFactory,
     );
 
     console.log("MonadexPrelaunchPoints upgraded successfully");

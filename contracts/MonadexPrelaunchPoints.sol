@@ -31,22 +31,21 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
      * by the Monadex team.
      */
     TransferRequest[] private s_verificationQueue;
-    uint256 private s_currentIndex;
     uint256[20] private __; // reserving some space so that we can add variables during an update
 
     event PointsAllocated(address indexed user, uint256 indexed amount);
     event BatchPointsAllocated(address[] users, uint256[] amounts);
     event Penalized(address user, uint256 amount);
     event BatchPenalized(address[] users, uint256[] amounts);
-    event TransferRequestIssued(address indexed by, uint256 indexed index);
-    event TransferRequestAccepted(uint256 indexed index);
-    event BatchTransferRequestsAccepted(uint256[] indices);
+    event TransferRequestIssued(address indexed by);
+    event TransferRequestAccepted();
 
     error MonadexPrelauncPoints__ArraySizesDoNotMatch();
     error MonadexPrelauncPoints__ExcessPenalty();
 
     function initialize(address _owner) public initializer {
         __Ownable_init(_owner);
+        __UUPSUpgradeable_init();
     }
 
     /**
@@ -73,6 +72,8 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
         while (length >= 0) {
             s_pointsAllocated[_users[length]] += _amounts[length];
             s_totalSupply += _amounts[length];
+
+            --length;
         }
 
         emit BatchPointsAllocated(_users, _amounts);
@@ -106,6 +107,8 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
 
             s_pointsAllocated[_users[length]] -= _amounts[length];
             s_totalSupply -= _amounts[length];
+
+            --length;
         }
 
         emit BatchPenalized(_users, _amounts);
@@ -125,11 +128,10 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
     {
         TransferRequest memory transferRequest = TransferRequest({to: _to, amount: _amount, description: _description});
         s_verificationQueue.push(transferRequest);
-        uint256 currentIndex = s_currentIndex++;
 
-        emit TransferRequestIssued(msg.sender, currentIndex);
+        emit TransferRequestIssued(msg.sender);
 
-        return currentIndex;
+        return s_verificationQueue.length - 1;
     }
 
     /**
@@ -140,23 +142,11 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
         TransferRequest memory transferRequest = s_verificationQueue[_index];
         s_pointsAllocated[transferRequest.to] += transferRequest.amount;
 
-        emit TransferRequestAccepted(_index);
-    }
+        uint256 length = s_verificationQueue.length;
+        s_verificationQueue[_index] = s_verificationQueue[length - 1];
+        s_verificationQueue.pop();
 
-    /**
-     * @notice Allows the Monadex team to accept and execute multiple transfer requests.
-     * @param _indices The indices at which the requests sit.
-     */
-    function batchAcceptTransferRequests(uint256[] memory _indices) external onlyOwner {
-        uint256 length = _indices.length;
-        TransferRequest memory transferRequest;
-
-        for (uint256 count = 0; count < length; ++count) {
-            transferRequest = s_verificationQueue[_indices[count]];
-            s_pointsAllocated[transferRequest.to] += transferRequest.amount;
-        }
-
-        emit BatchTransferRequestsAccepted(_indices);
+        emit TransferRequestAccepted();
     }
 
     /**
@@ -186,21 +176,12 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
     }
 
     /**
-     * @notice Gets the transfer request at the specified index.
-     * @param _index The index at which the transfer request sits.
-     * @return The TransferRequest struct.
-     */
-    function getTransferRquestAtIndex(uint256 _index) external view returns (TransferRequest memory) {
-        return s_verificationQueue[_index];
-    }
-
-    /**
      * @notice Gets the current index of the verification queue.
      * @return The current index of the verification queue.
      */
     function getCurrentIndex() external view returns (uint256) {
-        return s_currentIndex;
+        return s_verificationQueue.length - 1;
     }
 
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+    function _authorizeUpgrade(address /* newImplementation */ ) internal override onlyOwner {}
 }
