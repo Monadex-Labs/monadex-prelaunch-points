@@ -1,6 +1,7 @@
 {
     "scripts": {
-        "format": "prettier . --write"
+        "format": "prettier . --write",
+        "precommit": "pnpm run format && git add ."
     },
     "dependencies": {
         "hardhat": "^2.22.3"
