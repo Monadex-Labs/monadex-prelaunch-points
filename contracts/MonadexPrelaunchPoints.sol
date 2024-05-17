@@ -67,13 +67,11 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
      */
     function batchAllocatePoints(address[] memory _users, uint256[] memory _amounts) external onlyOwner {
         if (_users.length != _amounts.length) revert MonadexPrelauncPoints__ArraySizesDoNotMatch();
-        uint256 length = _users.length - 1;
+        uint256 length = _users.length;
 
-        while (length >= 0) {
-            s_pointsAllocated[_users[length]] += _amounts[length];
-            s_totalSupply += _amounts[length];
-
-            --length;
+        for (uint256 count = 0; count < length; ++count) {
+            s_pointsAllocated[_users[count]] += _amounts[count];
+            s_totalSupply += _amounts[count];
         }
 
         emit BatchPointsAllocated(_users, _amounts);
@@ -100,15 +98,13 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
      */
     function batchPenalize(address[] memory _users, uint256[] memory _amounts) external onlyOwner {
         if (_users.length != _amounts.length) revert MonadexPrelauncPoints__ArraySizesDoNotMatch();
-        uint256 length = _users.length - 1;
+        uint256 length = _users.length;
 
-        while (length >= 0) {
-            if (s_pointsAllocated[_users[length]] < _amounts[length]) revert MonadexPrelauncPoints__ExcessPenalty();
+        for (uint256 count = 0; count < length; ++count) {
+            if (s_pointsAllocated[_users[count]] < _amounts[count]) revert MonadexPrelauncPoints__ExcessPenalty();
 
-            s_pointsAllocated[_users[length]] -= _amounts[length];
-            s_totalSupply -= _amounts[length];
-
-            --length;
+            s_pointsAllocated[_users[count]] -= _amounts[count];
+            s_totalSupply -= _amounts[count];
         }
 
         emit BatchPenalized(_users, _amounts);
