@@ -16,29 +16,14 @@ import {
  * launch.
  */
 contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepUpgradeable {
-    struct TransferRequest {
-        address to;
-        uint256 amount;
-        string description;
-    }
-
     mapping(address user => uint256 points) private s_pointsAllocated;
     uint256 private s_totalSupply;
-    /**
-     * @dev Users aren't allowed to directly transfer points. However, this is limiting.
-     * Users may want to gift points to others, etc. Thus, we introduce a verification
-     * queue where users can issue transfer requests, which can be verified and executed
-     * by the Monadex team.
-     */
-    TransferRequest[] private s_verificationQueue;
     uint256[20] private __; // reserving some space so that we can add variables during an update
 
     event PointsAllocated(address indexed user, uint256 indexed amount);
     event BatchPointsAllocated(address[] users, uint256[] amounts);
     event Penalized(address user, uint256 amount);
     event BatchPenalized(address[] users, uint256[] amounts);
-    event TransferRequestIssued(address indexed by);
-    event TransferRequestAccepted();
 
     error MonadexPrelauncPoints__ArraySizesDoNotMatch();
     error MonadexPrelauncPoints__ExcessPenalty();
@@ -111,50 +96,6 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
     }
 
     /**
-     * @notice Allows any user to issue a transfer request. This request will sit in the verification queue
-     * until it is accepted by the Monadex team.
-     * @param _to The receiver of points.
-     * @param _amount The amount to transfer.
-     * @param _description A supporting reason for the transfer.
-     * @return The index at which the request sits in the verification queue.
-     */
-    function issueTransferRequest(address _to, uint256 _amount, string memory _description)
-        external
-        returns (uint256)
-    {
-        TransferRequest memory transferRequest = TransferRequest({to: _to, amount: _amount, description: _description});
-        s_verificationQueue.push(transferRequest);
-
-        emit TransferRequestIssued(msg.sender);
-
-        return s_verificationQueue.length - 1;
-    }
-
-    /**
-     * @notice Allows the Monadex team to accept and execute a transfer request.
-     * @param _index The index at which the request sits.
-     */
-    function acceptTransferRequest(uint256 _index) external onlyOwner {
-        TransferRequest memory transferRequest = s_verificationQueue[_index];
-        s_pointsAllocated[transferRequest.to] += transferRequest.amount;
-
-        uint256 length = s_verificationQueue.length;
-        s_verificationQueue[_index] = s_verificationQueue[length - 1];
-        s_verificationQueue.pop();
-
-        emit TransferRequestAccepted();
-    }
-
-    /**
-     * @notice Gets the transfer request details at the specified index.
-     * @param _index The index at which the transfer request details lie.
-     * @return The TransferRequest struct.
-     */
-    function getTransferRequest(uint256 _index) external view returns (TransferRequest memory) {
-        return s_verificationQueue[_index];
-    }
-
-    /**
      * @notice Gets the point balance of a user.
      * @param _user The user's address.
      * @return The user's point balance.
@@ -169,14 +110,6 @@ contract MonadexPrelaunchPoints is Initializable, UUPSUpgradeable, Ownable2StepU
      */
     function getTotalSupply() external view returns (uint256) {
         return s_totalSupply;
-    }
-
-    /**
-     * @notice Gets the current index of the verification queue.
-     * @return The current index of the verification queue.
-     */
-    function getCurrentIndex() external view returns (uint256) {
-        return s_verificationQueue.length - 1;
     }
 
     function _authorizeUpgrade(address /* newImplementation */ ) internal override onlyOwner {}
